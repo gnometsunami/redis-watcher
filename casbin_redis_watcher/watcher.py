@@ -146,25 +146,49 @@ class MSG:
 def new_watcher(option: WatcherOptions):
     option.init_config()
     w = RedisWatcher()
-    rds = Redis(host=option.host, port=option.port, password=option.password, ssl=option.ssl)
-    if rds.ping() is False:
+
+    w.pub_client = Redis(
+        host=option.host,
+        port=int(option.port),
+        password=option.password,
+        ssl=option.ssl,
+        decode_responses=True,
+    )
+
+    if not w.pub_client.ping():
         raise Exception("Redis server is not available.")
-    w.sub_client = rds.client().pubsub()
-    w.pub_client = rds.client()
+
+    w.sub_client = Redis(
+        host=option.host,
+        port=int(option.port),
+        password=option.password,
+        ssl=option.ssl,
+        decode_responses=True,
+    ).pubsub(ignore_subscribe_messages=True)
+
     w.init_config(option)
     w.close = False
     w.subscribe_thread.start()
     w.subscribe_event.wait(timeout=5)
+
     return w
 
 
 def new_publish_watcher(option: WatcherOptions):
     option.init_config()
     w = RedisWatcher()
-    rds = Redis(host=option.host, port=option.port, password=option.password, ssl=option.ssl)
-    if rds.ping() is False:
+
+    w.pub_client = Redis(
+        host=option.host,
+        port=int(option.port),
+        password=option.password,
+        ssl=option.ssl,
+        decode_responses=True,
+    )
+
+    if not w.pub_client.ping():
         raise Exception("Redis server is not available.")
-    w.pub_client = rds.client()
+
     w.init_config(option)
     w.close = False
     return w
